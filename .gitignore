@@ -1,0 +1,20 @@
+# Executables and binaries
+bvh_raytracer
+sphere_raytracer
+raytracer
+*.exe
+*.out
+
+# Large model files - exclude these
+*.obj
+
+# Build files
+build/
+bin/
+*.o
+
+# Large directories we don't need
+CImg-3.5.4/examples/
+CImg-3.5.4/html/
+CImg-3.5.4/resources/
+CImg-3.5.4/.github/
