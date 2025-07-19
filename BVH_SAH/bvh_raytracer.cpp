@@ -14,10 +14,10 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat-truncation"
 #pragma GCC diagnostic ignored "-Wall"
-#include "/home/sejal/Documents/Computer Graphics Lab /Simple_ray_tracer/CImg-3.5.4/CImg.h"
+#include "../CImg-3.5.4/CImg.h"
 #pragma GCC diagnostic pop
 
-using namespace cimg_library;
+using namespace cimg_library; 
 using namespace std;
 
 struct Vec3 {
@@ -172,11 +172,11 @@ private:
     int maxTrianglesPerLeaf;
     int maxDepth;
     int nodeCounter;
-    static const int NUM_BUCKETS = 32;
+    int NUM_BUCKETS; 
     
 public:
-    BucketedSAHBuilder(std::vector<Triangle>* tris, int maxTrisPerLeaf = 8, int maxD = 20) 
-        : triangles(tris), maxTrianglesPerLeaf(maxTrisPerLeaf), maxDepth(maxD), nodeCounter(0) {}
+BucketedSAHBuilder(std::vector<Triangle>* tris, int buckets = 12, int maxTrisPerLeaf = 8, int maxD = 20) 
+: triangles(tris), NUM_BUCKETS(buckets), maxTrianglesPerLeaf(maxTrisPerLeaf), maxDepth(maxD), nodeCounter(0) {}
     
     std::unique_ptr<BVHNode> build(std::vector<int>& triangleIndices, int depth = 0) {
         auto node = std::make_unique<BVHNode>();
@@ -627,6 +627,7 @@ int main(int argc, char** argv) {
     bool show_stats = false;
     bool show_tree = false;
     std::string obj_filename = "hairball.obj";
+    int numBuckets = 12; 
 
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
@@ -654,6 +655,9 @@ int main(int argc, char** argv) {
             show_stats = true;
         } else if (arg == "--tree") {
             show_tree = true;
+        } else if (arg == "--buckets" && i + 1 < argc) {  
+            numBuckets = std::stoi(argv[i+1]);           
+            i += 1;                                      
         }
     }
 
@@ -673,7 +677,7 @@ int main(int argc, char** argv) {
         triangleIndices.push_back(i);
     }
     
-    BucketedSAHBuilder builder(&triangles, 4, 15);
+    BucketedSAHBuilder builder(&triangles,numBuckets, 4, 15);
     auto bvhRoot = builder.build(triangleIndices);
     
     auto buildEnd = std::chrono::high_resolution_clock::now();
@@ -789,18 +793,17 @@ int main(int argc, char** argv) {
     std::string output_filename = "hairball_32.png";
     image.save(output_filename.c_str());
     
-    std::cout << "\nRendering completed!" << std::endl;
+   
+    float avgNodeTests = show_stats ? (float)totalNodeTests / (width * height) : 0.0f;
+    
+    std::cout << "Build time: " << buildTime.count() << "ms" << std::endl;
     std::cout << "Render time: " << renderTime.count() << "ms" << std::endl;
-    std::cout << "Triangles: " << triangles.size() << std::endl;
+    if (show_stats) {
+        std::cout << "Nodes per ray: " << std::fixed << std::setprecision(2) << avgNodeTests << std::endl;
+    }
     std::cout << "Image saved: " << output_filename << std::endl;
     
-    if (show_stats) {
-        std::cout << "\nBVH Performance Statistics:" << std::endl;
-        std::cout << "Total node tests: " << totalNodeTests << std::endl;
-        std::cout << "Total triangle tests: " << totalTriangleTests << std::endl;
-        std::cout << "Average node tests per ray: " << (float)totalNodeTests / (width * height) << std::endl;
-        std::cout << "Average triangle tests per ray: " << (float)totalTriangleTests / (width * height) << std::endl;
-    }
+   
     
     return 0;
 }
